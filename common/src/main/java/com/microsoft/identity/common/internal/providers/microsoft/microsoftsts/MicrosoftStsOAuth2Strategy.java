@@ -94,6 +94,8 @@ public class MicrosoftStsOAuth2Strategy extends OAuth2Strategy {
 
     @Override
     protected TokenResult getTokenResultFromHttpResponse(HttpResponse response) {
+        //Valid the httpResponse
+
         TokenResponse tokenResponse = null;
         TokenErrorResponse tokenErrorResponse = null;
 
