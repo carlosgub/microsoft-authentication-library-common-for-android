@@ -28,6 +28,11 @@ public class AuthorizationResponse {
      */
     protected String mState;
 
+    AuthorizationResponse(final String code, final String state) {
+        mCode = code;
+        mState = state;
+    }
+
     /**
      * Gets the responses code.
      *

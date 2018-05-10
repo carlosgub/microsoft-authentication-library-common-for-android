@@ -129,7 +129,7 @@ public final class AuthenticationConstants {
         public static final String ERROR_DESCRIPTION = "error_description";
 
         /** String of error codes. */
-        public static final String ERROR_CODES = "error_codes";
+        public static final String ERROR_CODE = "error_code";
 
         /** String of expires in. */
         public static final String EXPIRES_IN = "expires_in";
@@ -277,6 +277,9 @@ public final class AuthenticationConstants {
 
         /** String for request id returned from Evo. **/
         public static final String REQUEST_ID_HEADER = "x-ms-request-id";
+
+        /** String for authorization final url. **/
+        public static final String AUTHORIZATION_FINAL_URL = "com.microsoft.identity.client.finalUrl";
     }
 
     /**

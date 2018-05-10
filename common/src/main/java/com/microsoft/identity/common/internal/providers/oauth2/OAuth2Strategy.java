@@ -42,7 +42,7 @@ public abstract class OAuth2Strategy {
         Uri authorizationUri = createAuthorizationUri();
         AuthorizationResult result = authorizationStrategy.requestAuthorization(request);
         //TODO: Reconcile authorization result and response
-        AuthorizationResponse response = new AuthorizationResponse();
+        AuthorizationResponse response = result.getAuthorizationResponse();
         return response;
     }
 
