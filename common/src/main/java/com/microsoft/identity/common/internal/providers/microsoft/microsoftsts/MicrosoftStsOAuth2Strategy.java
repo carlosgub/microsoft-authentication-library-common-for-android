@@ -92,6 +92,36 @@ public class MicrosoftStsOAuth2Strategy extends OAuth2Strategy {
         // TODO implement
     }
 
+    /**
+     * There are two kinds of token response in the {@link HttpResponse#mResponseBody} in AAD v2.0,
+     * successful response and error response.
+     *
+     * The successful response is JSON string containing
+     *             access_token
+     *             token_type
+     *             expires_in
+     *             scope
+     *             refresh_token: only provided if `offline_access` scope was requested.
+     *             id_token: an unsigned JSON Web Token (JWT). Only provided if `openid` scope was requested.
+     *
+     * The token issuance endpoint errors are HTTP error codes, because the client calls the token
+     * issuance endpoint directly. In addition to the HTTP status code, the Azure AD token issuance
+     * endpoint also returns a JSON document with objects that describe the error.
+     *             error
+     *             error_description in JSON format
+     *             error_codes
+     *             timestamp
+     *             trace_id
+     *             correlation_id
+     *
+     * This function is only used to check if the {@link HttpResponse#mResponseBody} is in the right JSON format.
+     * @param response
+     */
+    @Override
+    protected void validateTokenResponse(HttpResponse response) {
+
+    }
+
     @Override
     protected TokenResult getTokenResultFromHttpResponse(HttpResponse response) {
         //Valid the httpResponse

@@ -50,6 +50,7 @@ public abstract class OAuth2Strategy {
     public TokenResult requestToken(TokenRequest request) throws IOException {
         validateTokenRequest(request);
         HttpResponse response = performTokenRequest(request);
+        validateTokenResponse(response);
         return getTokenResultFromHttpResponse(response);
     }
 
@@ -116,6 +117,12 @@ public abstract class OAuth2Strategy {
      * @param request
      */
     protected abstract void validateTokenRequest(TokenRequest request);
+
+    /**
+     * Abstract method for validating the http response from server for token request.
+     * @param response
+     */
+    protected abstract void validateTokenResponse(HttpResponse response);
 
     /**
      * Abstract method for translating the HttpResponse to a TokenResponse.

@@ -49,6 +49,35 @@ public class AzureActiveDirectoryOAuth2Strategy extends OAuth2Strategy {
     }
 
     /**
+     * There are two kinds of token response in the {@link HttpResponse#mResponseBody} in AAD v1.0, successful response and error response.
+     * The successful response is JSON string containing
+     *             access_token, which is a signed JSON Web Token (JWT)
+     *             token_type
+     *             expires_in
+     *             expires_on
+     *             resource
+     *             scope
+     *             refresh_token
+     *             id_token, which is a unsigned JSON Web Token (JWT)
+     *
+     * The token issuance endpoint errors are HTTP error codes, because the client calls the token
+     * issuance endpoint directly. In addition to the HTTP status code, the Azure AD token issuance
+     * endpoint also returns a JSON document with objects that describe the error.
+     *             error
+     *             error_description in JSON format
+     *             error_codes
+     *             timestamp
+     *             trace_id
+     *             correlation_id
+     *
+     * @param response
+     */
+    @Override
+    protected void validateTokenResponse(HttpResponse response) {
+
+    }
+
+    /**
      * Stubbed out for now, but should create a new AzureActiveDirectory account
      * Should accept a parameter (TokenResponse) for producing that user
      *

@@ -63,6 +63,11 @@ public class AzureActiveDirectoryB2COAuth2Strategy extends OAuth2Strategy {
     }
 
     @Override
+    protected void validateTokenResponse(HttpResponse response) {
+
+    }
+
+    @Override
     protected void validateTokenRequest(TokenRequest request) {
 
     }
