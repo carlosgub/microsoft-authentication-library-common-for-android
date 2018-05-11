@@ -55,15 +55,69 @@ public class ActiveDirectoryFederationServices2016OAuth2Strategy extends OAuth2S
         return null;
     }
 
+    /**
+     * GET https://fs.contoso.com/adfs/oauth2/authorize?
+     *
+     * The authorization request containing
+     *         response_type: "code"
+     *         resource: RP ID (Identifier) of Web API in application group
+     *         client_id: client Id of the native application in the application group
+     *         redirect_uri: redirect URI of native application in application group
+     *
+     * @param request
+     */
     @Override
     protected void validateAuthorizationRequest(AuthorizationRequest request) {
     }
 
+    /**
+     * AD FS responds by returning an authorization code as the "code" parameter in the query
+     * component of the redirect_uri.
+     * For example: HTTP/1.1 302 Found Location: http://redirect_uri:80/?code=<code>;
+     *
+     * @param response
+     */
+    protected void validateAuthorizationResponse(HttpResponse response) {
+
+    }
+
+    /**
+     * POST https://fs.contoso.com/adfs/oauth2/token
+     *
+     *
+     *         grant_type: "authorization_code"
+     *         code
+     *         resource
+     *         client_id
+     *         redirect_uri
+     * @param request
+     */
     @Override
     protected void validateTokenRequest(TokenRequest request) {
 
     }
 
+    /**
+     * After the access token expires, ADAL/MSAL will automatically send a refresh token based request
+     * to the AD FS token endpoint (skipping the authorization request automatically).
+     * Refresh token request:
+     * POST https://fs.contoso.com/adfs/oauth2/token
+     *
+     * Parameter     |  Value
+     * ================================
+     * grant_type    |  "refresh_token"
+     * resource      |  RP ID (Identifier) of Web API in application group
+     * client_id     |  client Id of the native application in the application group
+     * refresh_token | the refresh token issued by AD FS in response to the initial token request
+     */
+    protected void validateRefreshTokenRequest() {
+
+    }
+
+    /**
+     * AD FS responds with an HTTP 200 with the access_token, refresh_token, and id_token in the body.
+     * @param response
+     */
     @Override
     protected void validateTokenResponse(HttpResponse response) {
 

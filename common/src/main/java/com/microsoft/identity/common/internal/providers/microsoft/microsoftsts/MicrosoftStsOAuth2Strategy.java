@@ -2,6 +2,7 @@ package com.microsoft.identity.common.internal.providers.microsoft.microsoftsts;
 
 import com.microsoft.identity.common.Account;
 
+import com.microsoft.identity.common.exception.ErrorStrings;
 import com.microsoft.identity.common.internal.net.HttpResponse;
 import com.microsoft.identity.common.internal.net.ObjectMapper;
 import com.microsoft.identity.common.internal.providers.microsoft.MicrosoftTokenErrorResponse;
@@ -119,6 +120,9 @@ public class MicrosoftStsOAuth2Strategy extends OAuth2Strategy {
      */
     @Override
     protected void validateTokenResponse(HttpResponse response) {
+        if (null == response) {
+            throw new ServiceException(ErrorStrings.UNSUPPORTED_ENCODING)
+        }
 
     }
 
