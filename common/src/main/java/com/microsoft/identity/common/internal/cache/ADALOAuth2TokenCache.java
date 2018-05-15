@@ -18,6 +18,7 @@ import com.microsoft.identity.common.internal.providers.oauth2.AuthorizationRequ
 import com.microsoft.identity.common.internal.providers.oauth2.OAuth2Strategy;
 import com.microsoft.identity.common.internal.providers.oauth2.OAuth2TokenCache;
 import com.microsoft.identity.common.internal.providers.oauth2.RefreshToken;
+import com.microsoft.identity.common.internal.providers.oauth2.TokenRequest;
 import com.microsoft.identity.common.internal.providers.oauth2.TokenResponse;
 
 import java.io.IOException;
@@ -180,7 +181,9 @@ public class ADALOAuth2TokenCache extends OAuth2TokenCache implements IShareSing
     }
 
     @Override
-    public RefreshToken getSingleSignOnState(Account account) {
-        return null;
+    public RefreshToken getSingleSignOnState(Account account, TokenRequest tokenRequest) {
+        final String cacheKey = CacheKey.createCacheKeyForRTEntry(getAuthorityUrlWithPreferredCache(), resource, clientId, user);
+
+
     }
 }

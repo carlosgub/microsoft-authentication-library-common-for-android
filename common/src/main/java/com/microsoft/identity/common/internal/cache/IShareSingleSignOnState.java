@@ -2,6 +2,7 @@ package com.microsoft.identity.common.internal.cache;
 
 import com.microsoft.identity.common.Account;
 import com.microsoft.identity.common.internal.providers.oauth2.RefreshToken;
+import com.microsoft.identity.common.internal.providers.oauth2.TokenRequest;
 
 /**
  * Interface that defines methods allowing refresh token cache state to be shared between Cache Implementations
@@ -11,6 +12,6 @@ public interface IShareSingleSignOnState {
 
     void setSingleSignOnState(Account account, RefreshToken refreshToken);
 
-    RefreshToken getSingleSignOnState(Account account);
+    RefreshToken getSingleSignOnState(Account account, TokenRequest tr);
 
 }
