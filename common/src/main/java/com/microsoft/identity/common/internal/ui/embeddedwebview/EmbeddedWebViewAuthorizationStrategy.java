@@ -37,10 +37,13 @@ import com.microsoft.identity.common.internal.ui.AuthorizationConfiguration;
 
 
 public class EmbeddedWebViewAuthorizationStrategy extends AuthorizationStrategy {
+    private AuthorizationRequest request;
     private WebView mWebView;
     private String mStartUrl;
+    //will webview need Activity as variable?
 
-    public AuthorizationResult requestAuthorization (AuthorizationRequest request) {
+    public AuthorizationResult performAuthorization(AuthorizationRequest request) {
+        //load url
         throw new UnsupportedOperationException("Not implemented yet.");
     }
 
@@ -109,6 +112,29 @@ public class EmbeddedWebViewAuthorizationStrategy extends AuthorizationStrategy 
     }
 
     private void setupStartURL() {
+        /*
+         * Construct the start url
+         * 1. ADAL
+            loadUrl =  String.format("%s?%s", getAuthorizationEndpoint(), getAuthorizationEndpointQueryParameters())
+                        + "&package_name="
+                        + URLEncoder.encode(getCallingPackage(), AuthenticationConstants.ENCODING_UTF8)
+                        + "&signature="
+                        + URLEncoder.encode(info.getCurrentSignatureForPackage(mCallingPackage), AuthenticationConstants.ENCODING_UTF8);
+
+         * 2. Broker
+         * AuthenticationDialog: oauth.getCodeRequestUrl()
+         * AuthenticationActivity: oauth.getCodeRequestUrl() + "&package_name="
+                        + URLEncoder.encode(packageName, AuthenticationConstants.ENCODING_UTF8)
+                        + "&signature="
+                        + URLEncoder.encode(signatureDigest, AuthenticationConstants.ENCODING_UTF8)
+           AccountActivity: com.microsoft.aad.adal.unity.AccountActivity#createAuthorizationRequestUrl(request) with header[AuthenticationConstants.Broker.PRT_RESPONSE_HEADER, getIntent().getStringExtra(AuthenticationConstants.Broker.ACCOUNT_RESOLVE_INTERRUPT]
+
+         * 3. MSAL
+         * loadURL = MsalUtils.appendQueryParameterToUrl(
+                mAuthRequestParameters.getAuthority().getAuthorizeEndpoint(),
+                createAuthorizationRequestParameters());
+         */
+
         throw new UnsupportedOperationException("Not implemented yet.");
     }
 

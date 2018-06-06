@@ -34,5 +34,5 @@ public abstract class AuthorizationStrategy {
      * @param request authorization request
      * @return AuthorizationResult
      */
-    public abstract AuthorizationResult requestAuthorization(AuthorizationRequest request);
+    public abstract AuthorizationResult performAuthorization(AuthorizationRequest request);
 }
