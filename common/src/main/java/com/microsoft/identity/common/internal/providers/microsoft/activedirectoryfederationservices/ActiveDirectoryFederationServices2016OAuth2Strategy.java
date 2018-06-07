@@ -52,10 +52,10 @@ public class ActiveDirectoryFederationServices2016OAuth2Strategy extends OAuth2S
         super(config);
     }
 
-    @Override
+/*    @Override
     public AuthorizationResponse requestAuthorization(AuthorizationRequest request, AuthorizationStrategy authorizationStrategy) {
         return super.requestAuthorization(request, authorizationStrategy);
-    }
+    }*/
 
     @Override
     protected Uri createAuthorizationUri() {

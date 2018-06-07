@@ -55,10 +55,12 @@ public class ActiveDirectoryFederationServices2012R2OAuth2Strategy extends OAuth
         super(config);
     }
 
+/*
     @Override
     public AuthorizationResponse requestAuthorization(AuthorizationRequest request, AuthorizationStrategy authorizationStrategy) {
         return super.requestAuthorization(request, authorizationStrategy);
     }
+*/
 
     @Override
     protected Uri createAuthorizationUri() {

@@ -67,13 +67,13 @@ public abstract class OAuth2Strategy
         mConfig = config;
     }
 
-    /**
+/*    *//**
      * Template method for executing an OAuth2 authorization request.
      *
      * @param request               generic authorization request.
      * @param authorizationStrategy generic authorization strategy.
      * @return GenericAuthorizationResponse
-     */
+     *//*
     public GenericAuthorizationResponse requestAuthorization(
             final GenericAuthorizationRequest request,
             final GenericAuthorizationStrategy authorizationStrategy) {
@@ -83,7 +83,7 @@ public abstract class OAuth2Strategy
         //TODO: Reconcile authorization result and response
         AuthorizationResponse response = new AuthorizationResponse();
         return (GenericAuthorizationResponse) response;
-    }
+    }*/
 
     /**
      * @param request generic token request.

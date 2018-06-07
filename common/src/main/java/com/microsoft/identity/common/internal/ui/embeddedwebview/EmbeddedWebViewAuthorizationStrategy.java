@@ -23,6 +23,7 @@
 package com.microsoft.identity.common.internal.ui.embeddedwebview;
 
 import android.app.Activity;
+import android.hardware.fingerprint.FingerprintManager;
 import android.view.MotionEvent;
 import android.view.View;
 import android.webkit.WebView;
@@ -31,38 +32,42 @@ import com.microsoft.identity.common.adal.internal.AuthenticationConstants;
 import com.microsoft.identity.common.internal.providers.microsoft.azureactivedirectory.AzureActiveDirectoryAuthorizationRequest;
 import com.microsoft.identity.common.internal.providers.microsoft.microsoftsts.MicrosoftStsAuthorizationRequest;
 import com.microsoft.identity.common.internal.providers.oauth2.AuthorizationRequest;
+import com.microsoft.identity.common.internal.providers.oauth2.AuthorizationResponse;
 import com.microsoft.identity.common.internal.providers.oauth2.AuthorizationResult;
 import com.microsoft.identity.common.internal.providers.oauth2.AuthorizationStrategy;
 import com.microsoft.identity.common.internal.ui.AuthorizationConfiguration;
 
 
 public class EmbeddedWebViewAuthorizationStrategy extends AuthorizationStrategy {
-    private AuthorizationRequest request;
+    private AuthorizationConfiguration mAuthorizationConfiguration;
     private WebView mWebView;
     private String mStartUrl;
-    //will webview need Activity as variable?
 
-    public AuthorizationResult performAuthorization(AuthorizationRequest request) {
-        //load url
-        throw new UnsupportedOperationException("Not implemented yet.");
-    }
-
-    EmbeddedWebViewAuthorizationStrategy(Activity activity, AuthorizationRequest request) {
-        if (activity == null || request == null) {
+    EmbeddedWebViewAuthorizationStrategy(final AuthorizationConfiguration config) {
+        if (config == null) {
             throw new IllegalArgumentException("Null activity or request");
         }
+        mAuthorizationConfiguration = config;
+    }
 
-        //TODO validate auth request
+    public AuthorizationResult performAuthorizationRequest(final Activity activity, final AuthorizationRequest request) {
+        validateAuthorizationRequest(request);
         setupWebView(activity, request);
-        setupStartURL();
+        setupStartUrl();
 
+        return null;
+
+    }
+
+
+    private void validateAuthorizationRequest(final AuthorizationRequest request) {
+        throw new UnsupportedOperationException("Not implemented.");
     }
 
     private void setupWebView(final Activity activity, final AuthorizationRequest request) {
         // Create the Web View to show the page
         mWebView = (WebView)activity.findViewById(activity.getResources().getIdentifier("webView1", "id",
                 activity.getPackageName()));
-        mStartUrl = "about:blank";
         mWebView.getSettings().setUserAgentString(
                 mWebView.getSettings().getUserAgentString() + AuthenticationConstants.Broker.CLIENT_TLS_NOT_SUPPORTED);
 
@@ -111,7 +116,7 @@ public class EmbeddedWebViewAuthorizationStrategy extends AuthorizationStrategy 
         }
     }
 
-    private void setupStartURL() {
+    private void setupStartUrl() {
         /*
          * Construct the start url
          * 1. ADAL

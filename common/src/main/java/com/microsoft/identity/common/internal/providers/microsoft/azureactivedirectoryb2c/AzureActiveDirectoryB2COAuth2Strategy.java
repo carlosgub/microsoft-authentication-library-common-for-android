@@ -53,10 +53,10 @@ public class AzureActiveDirectoryB2COAuth2Strategy extends OAuth2Strategy {
         super(config);
     }
 
-    @Override
+/*    @Override
     public AuthorizationResponse requestAuthorization(AuthorizationRequest request, AuthorizationStrategy authorizationStrategy) {
         return super.requestAuthorization(request, authorizationStrategy);
-    }
+    }*/
 
     @Override
     protected Uri createAuthorizationUri() {

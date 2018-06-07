@@ -22,6 +22,8 @@
 // THE SOFTWARE.
 package com.microsoft.identity.common.internal.providers.oauth2;
 
+import android.app.Activity;
+
 /**
  * Abstracts the behavior associated with gathering a user authorization for an access token (oAuth)
  * and/or authentication information (OIDC)
@@ -34,5 +36,5 @@ public abstract class AuthorizationStrategy {
      * @param request authorization request
      * @return AuthorizationResult
      */
-    public abstract AuthorizationResult performAuthorization(AuthorizationRequest request);
+    public abstract AuthorizationResult performAuthorizationRequest(final Activity activity, final AuthorizationRequest request);
 }
