@@ -38,27 +38,27 @@ import com.microsoft.identity.common.internal.providers.oauth2.AuthorizationStra
 import com.microsoft.identity.common.internal.ui.AuthorizationConfiguration;
 
 
-public class EmbeddedWebViewAuthorizationStrategy extends AuthorizationStrategy {
+public class WebViewAuthorizationStrategy extends AuthorizationStrategy {
     private AuthorizationConfiguration mAuthorizationConfiguration;
     private WebView mWebView;
     private String mStartUrl;
 
-    EmbeddedWebViewAuthorizationStrategy(final AuthorizationConfiguration config) {
+    WebViewAuthorizationStrategy(final AuthorizationConfiguration config) {
         if (config == null) {
             throw new IllegalArgumentException("Null activity or request");
         }
+
         mAuthorizationConfiguration = config;
     }
 
     public AuthorizationResult performAuthorizationRequest(final Activity activity, final AuthorizationRequest request) {
         validateAuthorizationRequest(request);
         setupWebView(activity, request);
-        setupStartUrl();
+        setupStartUrl(request);
 
         return null;
 
     }
-
 
     private void validateAuthorizationRequest(final AuthorizationRequest request) {
         throw new UnsupportedOperationException("Not implemented.");
@@ -116,7 +116,7 @@ public class EmbeddedWebViewAuthorizationStrategy extends AuthorizationStrategy 
         }
     }
 
-    private void setupStartUrl() {
+    private void setupStartUrl(final AuthorizationRequest request) {
         /*
          * Construct the start url
          * 1. ADAL

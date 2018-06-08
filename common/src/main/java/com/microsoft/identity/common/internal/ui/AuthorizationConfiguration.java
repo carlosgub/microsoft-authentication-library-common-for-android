@@ -35,11 +35,16 @@ public class AuthorizationConfiguration {
     // static variable single_instance of type AuthorizationConfiguration.
     private static AuthorizationConfiguration sInstance = null;
 
-    private boolean isBrokerRequest = false;
-    private boolean isADALRequest = false;
-    private boolean isMSALRequest = false;
-    private boolean useEmbeddedWebView = true;
-    private boolean useSystemBrowser = false;
+    private boolean mIsBrokerRequest = false;
+    private boolean mIsADALRequest = false;
+    private boolean mIsMSALRequest = false;
+    private boolean mUseEmbeddedWebView = true;
+    private boolean mUseSystemBrowser = false;
+
+    /**
+        Flag to indicate if we verify the protocol state.
+     */
+    private boolean mVerifyState = true;
 
     private AuthorizationConfiguration(){
     }
@@ -53,44 +58,53 @@ public class AuthorizationConfiguration {
         return  sInstance;
     }
 
+
+    public boolean isVerifyState() {
+        return mVerifyState;
+    }
+
+    public void setVerifyState(final boolean verifyState) {
+        mVerifyState = verifyState;
+    }
+
     public boolean isBrokerRequest() {
-        return isBrokerRequest;
+        return mIsBrokerRequest;
     }
 
     public void setBrokerRequest(boolean brokerRequest) {
-        isBrokerRequest = brokerRequest;
+        mIsBrokerRequest = brokerRequest;
     }
 
     public boolean isADALRequest() {
-        return isADALRequest;
+        return mIsADALRequest;
     }
 
     public void setADALRequest(boolean ADALRequest) {
-        isADALRequest = ADALRequest;
+        mIsADALRequest = ADALRequest;
     }
 
     public boolean isMSALRequest() {
-        return isMSALRequest;
+        return mIsMSALRequest;
     }
 
     public void setMSALRequest(boolean MSALRequest) {
-        isMSALRequest = MSALRequest;
+        mIsMSALRequest = MSALRequest;
     }
 
     public boolean isUseEmbeddedWebView() {
-        return useEmbeddedWebView;
+        return mUseEmbeddedWebView;
     }
 
     public void setUseEmbeddedWebView(boolean useEmbeddedWebView) {
-        this.useEmbeddedWebView = useEmbeddedWebView;
+        mUseEmbeddedWebView = useEmbeddedWebView;
     }
 
     public boolean isUseSystemBrowser() {
-        return useSystemBrowser;
+        return mUseSystemBrowser;
     }
 
     public void setUseSystemBrowser(boolean useSystemBrowser) {
-        this.useSystemBrowser = useSystemBrowser;
+        mUseSystemBrowser = useSystemBrowser;
     }
 
 }
