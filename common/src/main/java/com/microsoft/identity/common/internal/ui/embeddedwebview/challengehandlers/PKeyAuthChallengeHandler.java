@@ -27,6 +27,7 @@ import android.os.Handler;
 import com.microsoft.identity.common.internal.providers.oauth2.AuthorizationResponse;
 
 final class PKeyAuthChallengeHandler {
+    private static final String TAG = PKeyAuthChallengeHandler.class.getSimpleName();
     private Handler mRefHandler; //NOPMD
 
     private AuthorizationResponse mResponse; //NOPMD

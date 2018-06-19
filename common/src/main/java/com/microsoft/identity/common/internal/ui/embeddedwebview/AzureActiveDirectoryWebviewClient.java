@@ -65,6 +65,8 @@ import java.util.Map;
  * 2. the auth result is handled in the Authorization result classes.
  */
 class AzureActiveDirectoryWebViewClient extends OAuth2WebViewClient {
+    private static final String TAG = AzureActiveDirectoryWebViewClient.class.getSimpleName();
+
     //TODO Change AuthorizationRequest into MicrosoftAuthorizationRequest after merging the AuthorizationRequest PR.
     AzureActiveDirectoryWebViewClient(@NonNull final Context context, @NonNull final AuthorizationRequest request) {
         super(context, request);

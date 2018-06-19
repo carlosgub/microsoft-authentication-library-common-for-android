@@ -23,5 +23,5 @@
 package com.microsoft.identity.common.internal.ui.embeddedwebview.challengehandlers;
 
 final class NtlmChallengeHandler {
-
+    private static final String TAG = NtlmChallengeHandler.class.getSimpleName();
 }

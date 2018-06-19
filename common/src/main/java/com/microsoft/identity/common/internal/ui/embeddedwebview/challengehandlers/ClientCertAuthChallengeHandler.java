@@ -23,4 +23,5 @@
 package com.microsoft.identity.common.internal.ui.embeddedwebview.challengehandlers;
 
 final class ClientCertAuthChallengeHandler {
+    private static final String TAG = ClientCertAuthChallengeHandler.class.getSimpleName();
 }

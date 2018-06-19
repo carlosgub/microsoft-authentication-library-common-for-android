@@ -42,7 +42,7 @@ import java.io.UnsupportedEncodingException;
  * Serve as a class to do the OAuth2 auth code grant flow with Android embedded web view.
  */
 public class EmbeddedWebViewAuthorizationStrategy extends AuthorizationStrategy {
-    private static final String TAG = StringExtensions.class.getSimpleName();
+    private static final String TAG = EmbeddedWebViewAuthorizationStrategy.class.getSimpleName();
     private WebView mWebView;
     private String mStartUrl;
 
