@@ -23,6 +23,7 @@
 package com.microsoft.identity.common.internal.ui.embeddedwebview;
 
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.net.http.SslError;
 import android.support.annotation.NonNull;
@@ -35,11 +36,16 @@ import android.webkit.WebResourceRequest;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
+import com.microsoft.identity.common.adal.internal.AuthenticationConstants;
 import com.microsoft.identity.common.adal.internal.util.StringExtensions;
+import com.microsoft.identity.common.internal.logging.Logger;
 import com.microsoft.identity.common.internal.providers.oauth2.AuthorizationRequest;
 import com.microsoft.identity.common.internal.util.StringUtil;
 
 public abstract class OAuth2WebViewClient extends WebViewClient {
+    /* constants */
+    private static final String TAG = OAuth2WebViewClient.class.getSimpleName();
+
     private final AuthorizationRequest mRequest;
     private final Context mContext;
 
@@ -64,11 +70,47 @@ public abstract class OAuth2WebViewClient extends WebViewClient {
      */
     OAuth2WebViewClient(@NonNull final Context context, @NonNull final AuthorizationRequest request) {
         //the validation of redirect url and authorization request should be in upper level before launching the webview.
-        if (null == context || null == request) {
-            throw new IllegalArgumentException("Null parameter to initialize OAuth2WebViewClient.");
-        }
-
         mContext = context;
         mRequest = request;
+    }
+
+    @Override
+    public void onReceivedHttpAuthRequest(WebView view, final HttpAuthHandler handler,
+                                          String host, String realm) {
+        // Create a dialog to ask for creds and post it to the handler.
+        Logger.info(TAG, "Receive the http auth request. Start the dialog to ask for creds. ");
+        Logger.infoPII(TAG, "Host:" + host);
+        //TODO TelemetryEvent.setNTLM(true);
+    }
+
+    @Override
+    public void onReceivedError(WebView view, int errorCode, String description, String failingUrl) {
+        /*super.onReceivedError(view, errorCode, description, failingUrl);
+        showSpinner(false);
+        Logger.e(TAG, "Webview received an error. ErrorCode:" + errorCode, description,
+                ADALError.ERROR_WEBVIEW);
+        Intent resultIntent = new Intent();
+        resultIntent.putExtra(AuthenticationConstants.Browser.RESPONSE_ERROR_CODE, "Error Code:"
+                + errorCode);
+        resultIntent.putExtra(AuthenticationConstants.Browser.RESPONSE_ERROR_MESSAGE, description);
+        resultIntent.putExtra(AuthenticationConstants.Browser.RESPONSE_REQUEST_INFO, mRequest);
+        sendResponse(AuthenticationConstants.UIResponse.BROWSER_CODE_ERROR, resultIntent);*/
+    }
+
+
+    @Override
+    public void onReceivedSslError(WebView view, SslErrorHandler handler, SslError error) {
+        // Developer does not have option to control this for now
+        /*super.onReceivedSslError(view, handler, error);
+        showSpinner(false);
+        handler.cancel();
+        Logger.e(TAG, "Received ssl error. ", "", ADALError.ERROR_FAILED_SSL_HANDSHAKE);
+        Intent resultIntent = new Intent();
+        resultIntent.putExtra(AuthenticationConstants.Browser.RESPONSE_ERROR_CODE, "Code:"
+                + ERROR_FAILED_SSL_HANDSHAKE);
+        resultIntent.putExtra(AuthenticationConstants.Browser.RESPONSE_ERROR_MESSAGE,
+                error.toString());
+        resultIntent.putExtra(AuthenticationConstants.Browser.RESPONSE_REQUEST_INFO, mRequest);
+        sendResponse(AuthenticationConstants.UIResponse.BROWSER_CODE_ERROR, resultIntent);*/
     }
 }
