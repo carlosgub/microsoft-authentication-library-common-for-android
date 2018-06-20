@@ -40,6 +40,7 @@ import com.microsoft.identity.common.adal.internal.AuthenticationConstants;
 import com.microsoft.identity.common.adal.internal.util.StringExtensions;
 import com.microsoft.identity.common.internal.logging.Logger;
 import com.microsoft.identity.common.internal.providers.oauth2.AuthorizationRequest;
+import com.microsoft.identity.common.internal.ui.embeddedwebview.challengehandlers.NtlmChallengeHandler;
 import com.microsoft.identity.common.internal.util.StringUtil;
 
 public abstract class OAuth2WebViewClient extends WebViewClient {
@@ -81,6 +82,10 @@ public abstract class OAuth2WebViewClient extends WebViewClient {
         Logger.info(TAG, "Receive the http auth request. Start the dialog to ask for creds. ");
         Logger.infoPII(TAG, "Host:" + host);
         //TODO TelemetryEvent.setNTLM(true);
+        final NtlmChallengeHandler.Builder ntlmChanllengeHandler
+                = new NtlmChallengeHandler.Builder(view, handler, host, realm);
+        ntlmChanllengeHandler.setContext(mContext);
+        ntlmChanllengeHandler.build().processNtlmChallenge();
     }
 
     @Override

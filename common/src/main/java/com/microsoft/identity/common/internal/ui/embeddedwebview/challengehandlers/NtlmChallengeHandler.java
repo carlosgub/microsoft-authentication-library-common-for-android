@@ -41,7 +41,7 @@ import com.microsoft.identity.common.internal.logging.Logger;
 /**
  * Http auth handler for NTLM challenge on web view.
  */
-final class NtlmChallengeHandler {
+public final class NtlmChallengeHandler {
     private static final String TAG = NtlmChallengeHandler.class.getSimpleName();
     private HttpAuthHandler mHandler;
     private WebView mView;
@@ -126,8 +126,8 @@ final class NtlmChallengeHandler {
         private Context mContext;
         private Activity mActivity;
 
-        public Builder(final HttpAuthHandler handler,
-                       final WebView view,
+        public Builder(final WebView view,
+                       final HttpAuthHandler handler,
                        final String host,
                        final String realm) {
             mHandler = handler;
