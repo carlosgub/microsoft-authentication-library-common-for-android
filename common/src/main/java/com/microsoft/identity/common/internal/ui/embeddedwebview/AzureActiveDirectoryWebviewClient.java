@@ -64,7 +64,8 @@ import java.util.Map;
  * 1. on the start url construction, which is handled in the Authorization request classes.
  * 2. the auth result is handled in the Authorization result classes.
  */
-class AzureActiveDirectoryWebViewClient extends OAuth2WebViewClient {
+public class AzureActiveDirectoryWebViewClient extends OAuth2WebViewClient {
+    private static final String TAG = AzureActiveDirectoryWebViewClient.class.getSimpleName();
     //TODO Change AuthorizationRequest into MicrosoftAuthorizationRequest after merging the AuthorizationRequest PR.
     AzureActiveDirectoryWebViewClient(@NonNull final Context context, @NonNull final AuthorizationRequest request) {
         super(context, request);
@@ -89,6 +90,7 @@ class AzureActiveDirectoryWebViewClient extends OAuth2WebViewClient {
     private boolean handleUrl(final WebView view, final String url) {
         final String formattedURL = url.toLowerCase(Locale.US);
         if (formattedURL.startsWith(AuthenticationConstants.Broker.PKEYAUTH_REDIRECT)) {
+            Logger.verbose(TAG, "Webview detected request for pkeyauth challenge.");
             //TODO handle Pkeyauth challenge
         } else if (formattedURL.startsWith(getRequest().getRedirectUri().toLowerCase(Locale.US))) {
             processRedirectUrl(view, url);
@@ -109,5 +111,11 @@ class AzureActiveDirectoryWebViewClient extends OAuth2WebViewClient {
         resultIntent.putExtra(AuthenticationConstants.Browser.RESPONSE_FINAL_URL, url);
         // TODO return result intent to caller and generate the authorization result.
         view.stopLoading();
+    }
+
+    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
+    @Override
+    public void onReceivedClientCertRequest(WebView view, final ClientCertRequest request) {
+
     }
 }

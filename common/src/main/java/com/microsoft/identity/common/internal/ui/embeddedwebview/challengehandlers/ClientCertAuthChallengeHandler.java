@@ -22,5 +22,78 @@
 // THE SOFTWARE.
 package com.microsoft.identity.common.internal.ui.embeddedwebview.challengehandlers;
 
+import android.annotation.TargetApi;
+import android.os.Build;
+import android.security.KeyChain;
+import android.security.KeyChainAliasCallback;
+import android.security.KeyChainException;
+import android.webkit.ClientCertRequest;
+
+import com.microsoft.identity.common.internal.logging.Logger;
+import com.microsoft.identity.common.internal.ui.embeddedwebview.AzureActiveDirectoryWebViewClient;
+
+import java.security.Principal;
+import java.security.PrivateKey;
+import java.security.cert.X509Certificate;
+
 final class ClientCertAuthChallengeHandler {
+    private static final String TAG = ClientCertAuthChallengeHandler.class.getSimpleName();
+    private ClientCertRequest mClientCertRequest;
+    private AzureActiveDirectoryWebViewClient mWebViewClient;
+
+    ClientCertAuthChallengeHandler(final ClientCertRequest request, final AzureActiveDirectoryWebViewClient webViewClient) {
+        mClientCertRequest = request;
+        mWebViewClient = webViewClient;
+    }
+
+    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
+    public void processClientCertAuth() {
+        final Principal[] acceptableCertIssuers = mClientCertRequest.getPrincipals();
+
+        // When ADFS server sends null or empty issuers, we'll continue with cert prompt.
+        if (acceptableCertIssuers != null) {
+            for (Principal issuer : acceptableCertIssuers) {
+                if (issuer.getName().contains("CN=MS-Organization-Access")) {
+                    //Checking if received acceptable issuers contain "CN=MS-Organization-Access"
+                    Logger.verbose(TAG, "Cancelling the TLS request, not respond to TLS challenge triggered by device authentication.");
+                    mClientCertRequest.cancel();
+                    return;
+                }
+            }
+        }
+
+        KeyChain.choosePrivateKeyAlias(, new KeyChainAliasCallback() {
+                    @Override
+                    public void alias(String alias) {
+                        if (alias == null) {
+                            Logger.verbose(TAG, "No certificate chosen by user, cancelling the TLS request.");
+                            mClientCertRequest.cancel();
+                            return;
+                        }
+
+                        try {
+                            final X509Certificate[] certChain = KeyChain.getCertificateChain(
+                                    mWebViewClient.getContext().getApplicationContext(), alias);
+                            final PrivateKey privateKey = KeyChain.getPrivateKey(
+                                    mWebViewClient.getContext(), alias);
+
+                            Logger.verbose(TAG, "Certificate is chosen by user, proceed with TLS request.");
+                            mClientCertRequest.proceed(privateKey, certChain);
+                            return;
+                        } catch (final KeyChainException e) {
+                            Logger.errorPII(TAG, "KeyChain exception", e);
+                        } catch (final InterruptedException e) {
+                            Logger.errorPII(TAG, "InterruptedException exception", e);
+                        }
+
+                        mClientCertRequest.cancel();
+                    }
+                },
+                mClientCertRequest.getKeyTypes(),
+                mClientCertRequest.getPrincipals(),
+                mClientCertRequest.getHost(),
+                mClientCertRequest.getPort(),
+                null);
+
+    }
 }
