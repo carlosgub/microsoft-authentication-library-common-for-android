@@ -22,7 +22,6 @@
 // THE SOFTWARE.
 package com.microsoft.identity.common.internal.ui.embeddedwebview.challengehandlers;
 
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -43,35 +42,30 @@ import com.microsoft.identity.common.internal.logging.Logger;
  */
 public final class NtlmChallengeHandler {
     private static final String TAG = NtlmChallengeHandler.class.getSimpleName();
-    private HttpAuthHandler mHandler;
-    private WebView mView;
-    private String mHost;
-    private String mRealm;
+    private NtlmChallenge mNtlmChallenge;
     private Context mContext;
-    private Activity mActivity;
+    private ChallengeCompletionCallback mChallengeCallbck;
 
     NtlmChallengeHandler(@NonNull final HttpAuthHandler handler,
                          @NonNull final WebView view,
                          @NonNull final String host,
                          @NonNull final String realm,
                          final Context context,
-                         final Activity activity) {
-        mHandler = handler;
-        mView = view;
-        mHost = host;
-        mRealm = realm;
+                         final ChallengeCompletionCallback callback) {
+        mNtlmChallenge = new NtlmChallenge(view, handler, host, realm);
         mContext = context;
-        mActivity = activity;
+        mChallengeCallbck = callback;
     }
 
-    public void processNtlmChallenge() {
-        if (mHandler.useHttpAuthUsernamePassword() && mView != null) {
-            String[] haup = mView.getHttpAuthUsernamePassword(mHost, mRealm);
+    public void process() {
+        if (mNtlmChallenge.getHandler().useHttpAuthUsernamePassword()
+                && mNtlmChallenge.getView() != null) {
+            String[] haup = mNtlmChallenge.getView().getHttpAuthUsernamePassword(mNtlmChallenge.getHost(), mNtlmChallenge.mRealm);
             if (haup != null && haup.length == 2) {
                 final String userName = haup[0];
-                final String password = haup[0];
+                final String password = haup[1];
                 if (userName != null && password != null) {
-                    mHandler.proceed(userName, password);
+                    mNtlmChallenge.getHandler().proceed(userName, password);
                 }
             }
         } else {
@@ -91,20 +85,20 @@ public final class NtlmChallengeHandler {
                 .setPositiveButton(R.string.http_auth_dialog_login,
                         new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog, int whichButton) {
-                                mHandler.proceed(usernameView.getText().toString(), passwordView.getText().toString());
+                                mNtlmChallenge.getHandler().proceed(usernameView.getText().toString(), passwordView.getText().toString());
                             }
                         })
                 .setNegativeButton(R.string.http_auth_dialog_cancel,
                         new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog, int whichButton) {
-                                mHandler.cancel();
+                                mNtlmChallenge.getHandler().cancel();
                                 cancelRequest();
                             }
                         })
                 .setOnCancelListener(
                         new DialogInterface.OnCancelListener() {
                             public void onCancel(DialogInterface dialog) {
-                                mHandler.cancel();
+                                mNtlmChallenge.getHandler().cancel();
                                 cancelRequest();
                             }
                         }).create().show();
@@ -112,40 +106,39 @@ public final class NtlmChallengeHandler {
 
     private void cancelRequest() {
         Logger.verbose(TAG, "Sending intent to cancel authentication activity");
-        Intent resultIntent = new Intent();
-        //data.putExtra(AuthenticationConstants.Browser.REQUEST_ID, mAuthRequest.getRequestId());
-        mActivity.setResult(AuthenticationConstants.UIResponse.BROWSER_CODE_CANCEL, resultIntent);
-        mActivity.finish();
+        mChallengeCallbck.onError(AuthenticationConstants.UIResponse.BROWSER_CODE_CANCEL, new Intent());
     }
 
-    public static class Builder {
+    class NtlmChallenge {
         private HttpAuthHandler mHandler;
         private WebView mView;
         private String mHost;
         private String mRealm;
-        private Context mContext;
-        private Activity mActivity;
 
-        public Builder(final WebView view,
-                       final HttpAuthHandler handler,
-                       final String host,
-                       final String realm) {
+        NtlmChallenge(final WebView view,
+                             final HttpAuthHandler handler,
+                             final String host,
+                             final String realm) {
             mHandler = handler;
             mView = view;
             mHost = host;
             mRealm = realm;
         }
 
-        public void setContext(final Context context) {
-            mContext = context;
+        HttpAuthHandler getHandler() {
+            return mHandler;
         }
 
-        public void setActivity(final Activity activity) {
-            mActivity = activity;
+        WebView getView() {
+            return mView;
         }
 
-        public NtlmChallengeHandler build() {
-            return new NtlmChallengeHandler(mHandler, mView, mHost, mRealm, mContext, mActivity);
+        String getHost() {
+            return mHost;
+        }
+
+        String getRealm() {
+            return mRealm;
         }
     }
 }

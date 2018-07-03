@@ -22,39 +22,24 @@
 // THE SOFTWARE.
 package com.microsoft.identity.common.internal.ui.embeddedwebview;
 
-import android.accounts.AccountManager;
 import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Bitmap;
 import android.net.Uri;
-import android.net.http.SslError;
 import android.os.Build;
-import android.security.KeyChain;
-import android.security.KeyChainAliasCallback;
-import android.security.KeyChainException;
 import android.support.annotation.NonNull;
-import android.text.TextUtils;
-import android.view.View;
 import android.webkit.ClientCertRequest;
-import android.webkit.HttpAuthHandler;
-import android.webkit.SslErrorHandler;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebView;
 
 import com.microsoft.identity.common.adal.internal.AuthenticationConstants;
-import com.microsoft.identity.common.adal.internal.util.StringExtensions;
 import com.microsoft.identity.common.internal.logging.Logger;
-import com.microsoft.identity.common.internal.providers.microsoft.azureactivedirectory.AzureActiveDirectoryAuthorizationRequest;
 import com.microsoft.identity.common.internal.providers.oauth2.AuthorizationRequest;
+import com.microsoft.identity.common.internal.ui.embeddedwebview.challengehandlers.ChallengeCompletionCallback;
+import com.microsoft.identity.common.internal.ui.embeddedwebview.challengehandlers.PKeyAuthChallengeHandler;
 import com.microsoft.identity.common.internal.util.StringUtil;
 
-import java.security.Principal;
-import java.security.PrivateKey;
-import java.security.cert.X509Certificate;
-import java.util.HashMap;
 import java.util.Locale;
-import java.util.Map;
 
 /**
  * For web view client, we do not distinguish V1 from V2.
@@ -91,7 +76,9 @@ public class AzureActiveDirectoryWebViewClient extends OAuth2WebViewClient {
         final String formattedURL = url.toLowerCase(Locale.US);
         if (formattedURL.startsWith(AuthenticationConstants.Broker.PKEYAUTH_REDIRECT)) {
             Logger.verbose(TAG, "Webview detected request for pkeyauth challenge.");
-            //TODO handle Pkeyauth challenge
+            final ChallengeCompletionCallback challengeCallback = new ChallengeCompletionCallback();
+            PKeyAuthChallengeHandler.newHandler().process(url, view, challengeCallback);
+            //TODO challengeCallback on error, on succeed
         } else if (formattedURL.startsWith(getRequest().getRedirectUri().toLowerCase(Locale.US))) {
             processRedirectUrl(view, url);
         } else if (formattedURL.startsWith(AuthenticationConstants.Broker.BROWSER_EXT_PREFIX)) {

@@ -49,6 +49,7 @@ public abstract class OAuth2WebViewClient extends WebViewClient {
     private static final String TAG = OAuth2WebViewClient.class.getSimpleName();
 
     private final AuthorizationRequest mRequest;
+    private final
     private final Context mContext;
 
     /**
@@ -76,8 +77,6 @@ public abstract class OAuth2WebViewClient extends WebViewClient {
         mContext = context;
         mRequest = request;
     }
-
-    public abstract void sendResponse(int returnCode, Intent responseIntent);
 
     @Override
     public void onReceivedHttpAuthRequest(WebView view, final HttpAuthHandler handler,

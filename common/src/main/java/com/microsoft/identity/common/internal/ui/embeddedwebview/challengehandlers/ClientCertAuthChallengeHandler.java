@@ -23,10 +23,12 @@
 package com.microsoft.identity.common.internal.ui.embeddedwebview.challengehandlers;
 
 import android.annotation.TargetApi;
+import android.app.Activity;
 import android.os.Build;
 import android.security.KeyChain;
 import android.security.KeyChainAliasCallback;
 import android.security.KeyChainException;
+import android.support.annotation.NonNull;
 import android.webkit.ClientCertRequest;
 
 import com.microsoft.identity.common.internal.logging.Logger;
@@ -40,10 +42,17 @@ final class ClientCertAuthChallengeHandler {
     private static final String TAG = ClientCertAuthChallengeHandler.class.getSimpleName();
     private ClientCertRequest mClientCertRequest;
     private AzureActiveDirectoryWebViewClient mWebViewClient;
+    private Activity mActivity;
+    private ChallengeCompletionCallback mCompletionCallback;
 
-    ClientCertAuthChallengeHandler(final ClientCertRequest request, final AzureActiveDirectoryWebViewClient webViewClient) {
+    ClientCertAuthChallengeHandler(@NonNull final ClientCertRequest request,
+                                   @NonNull final AzureActiveDirectoryWebViewClient webViewClient,
+                                   @NonNull final Activity activity,
+                                   final ChallengeCompletionCallback completionCallback) {
         mClientCertRequest = request;
         mWebViewClient = webViewClient;
+        mActivity = activity;
+        mCompletionCallback = completionCallback;
     }
 
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
@@ -62,7 +71,7 @@ final class ClientCertAuthChallengeHandler {
             }
         }
 
-        KeyChain.choosePrivateKeyAlias(, new KeyChainAliasCallback() {
+        KeyChain.choosePrivateKeyAlias(mActivity, new KeyChainAliasCallback() {
                     @Override
                     public void alias(String alias) {
                         if (alias == null) {
@@ -94,6 +103,5 @@ final class ClientCertAuthChallengeHandler {
                 mClientCertRequest.getHost(),
                 mClientCertRequest.getPort(),
                 null);
-
     }
 }
