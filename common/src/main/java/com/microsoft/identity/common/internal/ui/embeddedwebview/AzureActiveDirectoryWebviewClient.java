@@ -28,6 +28,7 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
 import android.support.annotation.NonNull;
+import android.support.annotation.RequiresApi;
 import android.webkit.ClientCertRequest;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebView;
@@ -35,7 +36,7 @@ import android.webkit.WebView;
 import com.microsoft.identity.common.adal.internal.AuthenticationConstants;
 import com.microsoft.identity.common.internal.logging.Logger;
 import com.microsoft.identity.common.internal.providers.oauth2.AuthorizationRequest;
-import com.microsoft.identity.common.internal.ui.embeddedwebview.challengehandlers.ChallengeCompletionCallback;
+import com.microsoft.identity.common.internal.ui.embeddedwebview.challengehandlers.IChallengeCompletionCallback;
 import com.microsoft.identity.common.internal.ui.embeddedwebview.challengehandlers.PKeyAuthChallengeHandler;
 import com.microsoft.identity.common.internal.util.StringUtil;
 
@@ -43,7 +44,7 @@ import java.util.Locale;
 
 /**
  * For web view client, we do not distinguish V1 from V2.
- * Thus we name V1 and V2 webviewclient as AADWebViewClient, synced with the naming in the iOS common library.
+ * Thus we name V1 and V2 webview client as AADWebViewClient, synced with the naming in the iOS common library.
  * <p>
  * The only differences between V1 and V2 is
  * 1. on the start url construction, which is handled in the Authorization request classes.
@@ -51,22 +52,40 @@ import java.util.Locale;
  */
 public class AzureActiveDirectoryWebViewClient extends OAuth2WebViewClient {
     private static final String TAG = AzureActiveDirectoryWebViewClient.class.getSimpleName();
+
     //TODO Change AuthorizationRequest into MicrosoftAuthorizationRequest after merging the AuthorizationRequest PR.
-    AzureActiveDirectoryWebViewClient(@NonNull final Context context, @NonNull final AuthorizationRequest request) {
-        super(context, request);
+    AzureActiveDirectoryWebViewClient(@NonNull final Context context,
+                                      @NonNull final AuthorizationRequest request,
+                                      @NonNull final IChallengeCompletionCallback callback) {
+        super(context, request, callback);
     }
 
+    /**
+     * Give the host application a chance to take over the control when a new url is about to be loaded in the current WebView.
+     * This method was deprecated in API level 24.
+     *
+     * @param view The WebView that is initiating the callback.
+     * @param url  The url to be loaded.
+     * @return return true means the host application handles the url, while return false means the current WebView handles the url.
+     */
     @Override
     public boolean shouldOverrideUrlLoading(final WebView view, final String url) {
         if (StringUtil.isEmpty(url)) {
             throw new IllegalArgumentException("Redirect to empty url in web view.");
         }
-
         return handleUrl(view, url);
     }
 
+    /**
+     * Give the host application a chance to take over the control when a new url is about to be loaded in the current WebView.
+     * This method is added in API level 24.
+     *
+     * @param view    The WebView that is initiating the callback.
+     * @param request Object containing the details of the request.
+     * @return return true means the host application handles the url, while return false means the current WebView handles the url.
+     */
     @Override
-    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
+    @RequiresApi(Build.VERSION_CODES.N)
     public boolean shouldOverrideUrlLoading(final WebView view, final WebResourceRequest request) {
         final Uri requestUrl = request.getUrl();
         return handleUrl(view, requestUrl.toString());
@@ -76,8 +95,7 @@ public class AzureActiveDirectoryWebViewClient extends OAuth2WebViewClient {
         final String formattedURL = url.toLowerCase(Locale.US);
         if (formattedURL.startsWith(AuthenticationConstants.Broker.PKEYAUTH_REDIRECT)) {
             Logger.verbose(TAG, "Webview detected request for pkeyauth challenge.");
-            final ChallengeCompletionCallback challengeCallback = new ChallengeCompletionCallback();
-            PKeyAuthChallengeHandler.newHandler().process(url, view, challengeCallback);
+            PKeyAuthChallengeHandler.newHandler().process(url, view, this.getCompletionCallback());
             //TODO challengeCallback on error, on succeed
         } else if (formattedURL.startsWith(getRequest().getRedirectUri().toLowerCase(Locale.US))) {
             processRedirectUrl(view, url);

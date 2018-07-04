@@ -55,7 +55,8 @@ public final class PKeyAuthChallengeHandler {
     public static PKeyAuthChallengeHandler newHandler() {
         return new PKeyAuthChallengeHandler();
     }
-    public void process(@NonNull final String redirectUri, @NonNull final WebView view, @NonNull ChallengeCompletionCallback completionCallback) {
+
+    public void process(@NonNull final String redirectUri, @NonNull final WebView view, @NonNull IChallengeCompletionCallback completionCallback) {
         try {
             final PkeyAuthChallengeResponse challengeResponse = getChallengeResponseFromUri(redirectUri);
             final Map<String, String> headers = new HashMap<>();
@@ -78,7 +79,7 @@ public final class PKeyAuthChallengeHandler {
             Intent resultIntent = new Intent();
             resultIntent.putExtra(AuthenticationConstants.Browser.RESPONSE_AUTHENTICATION_EXCEPTION, e);
             //TODO should put request info for onError() intent
-            completionCallback.onError(AuthenticationConstants.UIResponse.BROWSER_CODE_AUTHENTICATION_EXCEPTION, resultIntent);
+            completionCallback.sendResponse(AuthenticationConstants.UIResponse.BROWSER_CODE_AUTHENTICATION_EXCEPTION, resultIntent);
         }
     }
 

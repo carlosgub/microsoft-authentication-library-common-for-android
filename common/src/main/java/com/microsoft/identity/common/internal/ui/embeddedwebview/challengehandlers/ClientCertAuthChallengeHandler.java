@@ -43,12 +43,12 @@ final class ClientCertAuthChallengeHandler {
     private ClientCertRequest mClientCertRequest;
     private AzureActiveDirectoryWebViewClient mWebViewClient;
     private Activity mActivity;
-    private ChallengeCompletionCallback mCompletionCallback;
+    private IChallengeCompletionCallback mCompletionCallback;
 
     ClientCertAuthChallengeHandler(@NonNull final ClientCertRequest request,
                                    @NonNull final AzureActiveDirectoryWebViewClient webViewClient,
                                    @NonNull final Activity activity,
-                                   final ChallengeCompletionCallback completionCallback) {
+                                   final IChallengeCompletionCallback completionCallback) {
         mClientCertRequest = request;
         mWebViewClient = webViewClient;
         mActivity = activity;

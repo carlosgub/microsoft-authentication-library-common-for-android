@@ -29,27 +29,24 @@ import android.net.Uri;
 import android.net.http.SslError;
 import android.support.annotation.NonNull;
 import android.view.View;
-import android.webkit.ClientCertRequest;
 import android.webkit.HttpAuthHandler;
 import android.webkit.SslErrorHandler;
-import android.webkit.WebResourceError;
-import android.webkit.WebResourceRequest;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
 import com.microsoft.identity.common.adal.internal.AuthenticationConstants;
-import com.microsoft.identity.common.adal.internal.util.StringExtensions;
 import com.microsoft.identity.common.internal.logging.Logger;
 import com.microsoft.identity.common.internal.providers.oauth2.AuthorizationRequest;
+import com.microsoft.identity.common.internal.ui.embeddedwebview.challengehandlers.IChallengeCompletionCallback;
 import com.microsoft.identity.common.internal.ui.embeddedwebview.challengehandlers.NtlmChallengeHandler;
 import com.microsoft.identity.common.internal.util.StringUtil;
 
-public abstract class OAuth2WebViewClient extends WebViewClient {
+public class OAuth2WebViewClient extends WebViewClient {
     /* constants */
     private static final String TAG = OAuth2WebViewClient.class.getSimpleName();
 
+    private final IChallengeCompletionCallback mCompletionCallback;
     private final AuthorizationRequest mRequest;
-    private final
     private final Context mContext;
 
     /**
@@ -67,95 +64,120 @@ public abstract class OAuth2WebViewClient extends WebViewClient {
     }
 
     /**
+     *
+     * @return handler completion callback
+     */
+    IChallengeCompletionCallback getCompletionCallback() {
+        return mCompletionCallback;
+    }
+
+    /**
      * Constructor for the OAuth2 basic web view client.
      *
-     * @param context app Context
-     * @param request Authorization request
+     * @param context  app Context
+     * @param request  Authorization request
+     * @param callback Challenge completion callback
      */
-    OAuth2WebViewClient(@NonNull final Context context, @NonNull final AuthorizationRequest request) {
+    OAuth2WebViewClient(@NonNull final Context context,
+                        @NonNull final AuthorizationRequest request,
+                        @NonNull final IChallengeCompletionCallback callback) {
         //the validation of redirect url and authorization request should be in upper level before launching the webview.
         mContext = context;
         mRequest = request;
+        mCompletionCallback = callback;
     }
 
     @Override
     public void onReceivedHttpAuthRequest(WebView view, final HttpAuthHandler handler,
                                           String host, String realm) {
-        // Create a dialog to ask for creds and post it to the handler.
+        // Create a dialog to ask for credentials and post it to the handler.
         Logger.info(TAG, "Receive the http auth request. Start the dialog to ask for creds. ");
         Logger.infoPII(TAG, "Host:" + host);
 
-        //TODO TelemetryEvent.setNTLM(true);
-        final NtlmChallengeHandler.Builder ntlmChanllengeHandler
-                = new NtlmChallengeHandler.Builder(view, handler, host, realm);
-        ntlmChanllengeHandler.setContext(mContext);
-        ntlmChanllengeHandler.build().processNtlmChallenge();
+        //TODO TelemetryEvent.setNTLM(true); after the Telemetry is finished in common.
+        final NtlmChallengeHandler ntlmChallengeHandler
+                = new NtlmChallengeHandler(view, handler, host, realm, mContext, mCompletionCallback);
+        ntlmChallengeHandler.process();
     }
 
     @Override
-    public void onReceivedError(WebView view, int errorCode, String description, String failingUrl) {
+    public void onReceivedError(final WebView view,
+                                final int errorCode,
+                                final String description,
+                                final String failingUrl) {
         super.onReceivedError(view, errorCode, description, failingUrl);
-        // Create result intent when webview received an error.
+
+        // Create result intent when webView received an error.
         final Intent resultIntent = new Intent();
-        resultIntent.putExtra(AuthenticationConstants.Browser.RESPONSE_ERROR_CODE, "Error Code:"
-                + errorCode);
-        resultIntent.putExtra(AuthenticationConstants.Browser.RESPONSE_ERROR_MESSAGE, description);
-        resultIntent.putExtra(AuthenticationConstants.Browser.RESPONSE_REQUEST_INFO, mRequest);
+        resultIntent.putExtra(AuthenticationConstants.Browser.RESPONSE_ERROR_CODE,
+                "Error Code:" + errorCode);
+        resultIntent.putExtra(AuthenticationConstants.Browser.RESPONSE_ERROR_MESSAGE,
+                description);
+        resultIntent.putExtra(AuthenticationConstants.Browser.RESPONSE_REQUEST_INFO,
+                mRequest);
+
         // Send the result back to the calling activity
-        sendResponse(AuthenticationConstants.UIResponse.BROWSER_CODE_ERROR, resultIntent);
+        mCompletionCallback.sendResponse(AuthenticationConstants.UIResponse.BROWSER_CODE_ERROR, resultIntent);
     }
 
-
     @Override
-    public void onReceivedSslError(WebView view, SslErrorHandler handler, SslError error) {
+    public void onReceivedSslError(final WebView view,
+                                   final SslErrorHandler handler,
+                                   final SslError error) {
         // Developer does not have option to control this for now
         super.onReceivedSslError(view, handler, error);
         handler.cancel();
-        // Webview received the ssl error and create the result intent.
+
+        // WebView received the ssl error and create the result intent.
         final Intent resultIntent = new Intent();
-        resultIntent.putExtra(AuthenticationConstants.Browser.RESPONSE_ERROR_CODE, "Code:"
-                + ERROR_FAILED_SSL_HANDSHAKE);
+        resultIntent.putExtra(AuthenticationConstants.Browser.RESPONSE_ERROR_CODE,
+                "Code:" + ERROR_FAILED_SSL_HANDSHAKE);
         resultIntent.putExtra(AuthenticationConstants.Browser.RESPONSE_ERROR_MESSAGE,
                 error.toString());
-        resultIntent.putExtra(AuthenticationConstants.Browser.RESPONSE_REQUEST_INFO, mRequest);
+        resultIntent.putExtra(AuthenticationConstants.Browser.RESPONSE_REQUEST_INFO,
+                mRequest);
+
         // Send the result back to the calling activity
-        sendResponse(AuthenticationConstants.UIResponse.BROWSER_CODE_ERROR, resultIntent);
+        mCompletionCallback.sendResponse(AuthenticationConstants.UIResponse.BROWSER_CODE_ERROR, resultIntent);
     }
 
     @Override
-    public void onPageFinished(WebView view, String url) {
+    public void onPageFinished(final WebView view,
+                               final String url) {
         super.onPageFinished(view, url);
         // Once web view is fully loaded,set to visible
         view.setVisibility(View.VISIBLE);
     }
 
     @Override
-    public void onPageStarted(WebView view, String url, Bitmap favicon) {
+    public void onPageStarted(final WebView view,
+                              final String url,
+                              final Bitmap favicon) {
         checkStartUrl(url);
         super.onPageStarted(view, url, favicon);
     }
 
     private void checkStartUrl(final String url) {
+        //TODO should it return error response when it finds the start url is invalid?
+
         if (StringUtil.isEmpty(url)) {
             Logger.verbose(TAG, "onPageStarted: Null url for page to load.");
-            //should we send response back?
             return;
         }
 
         final Uri uri = Uri.parse(url);
         if (uri.isOpaque()) {
             Logger.verbose(TAG, "onPageStarted: Non-hierarchical loading uri.");
-            Logger.verbosePII(TAG, "url: " + url);
+            Logger.verbosePII(TAG, "start url: " + url);
             return;
         }
 
-        Logger.verbose(TAG, "Webview starts loading.");
+        Logger.verbose(TAG, "WebView starts loading.");
         if (StringUtil.isEmpty(uri.getQueryParameter(AuthenticationConstants.OAuth2.CODE))) {
-            Logger.verbosePII(TAG, "Host: " + uri.getHost() + " Path: " + uri.getPath()
-                    + " Auth code is returned for the loading url.");
+            Logger.verbosePII(TAG, "Host: " + uri.getHost() + " Path: " + uri.getPath());
         } else {
-            Logger.verbosePII(TAG, "Host: " + uri.getHost() + " Path: " + uri.getPath()
-                    + " Auth code is returned for the loading url.");
+            Logger.verbose(TAG, "Auth code is returned for the loading url.");
+            Logger.verbosePII(TAG, "Host: " + uri.getHost() + " Path: " + uri.getPath());
         }
     }
 }

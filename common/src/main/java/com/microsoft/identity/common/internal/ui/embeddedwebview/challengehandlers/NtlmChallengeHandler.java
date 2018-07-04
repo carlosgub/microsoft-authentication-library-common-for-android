@@ -26,7 +26,6 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.support.annotation.NonNull;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.webkit.HttpAuthHandler;
@@ -38,29 +37,35 @@ import com.microsoft.identity.common.adal.internal.AuthenticationConstants;
 import com.microsoft.identity.common.internal.logging.Logger;
 
 /**
- * Http auth handler for NTLM challenge on web view.
+ * Http authorization handler for NTLM challenge on web view.
  */
-public final class NtlmChallengeHandler {
+public final class NtlmChallengeHandler implements IChallengeHandler {
     private static final String TAG = NtlmChallengeHandler.class.getSimpleName();
     private NtlmChallenge mNtlmChallenge;
     private Context mContext;
-    private ChallengeCompletionCallback mChallengeCallbck;
+    private IChallengeCompletionCallback mChallengeCallback;
 
-    NtlmChallengeHandler(@NonNull final HttpAuthHandler handler,
-                         @NonNull final WebView view,
-                         @NonNull final String host,
-                         @NonNull final String realm,
-                         final Context context,
-                         final ChallengeCompletionCallback callback) {
+    public NtlmChallengeHandler(final WebView view,
+                                     final HttpAuthHandler handler,
+                                     final String host,
+                                     final String realm,
+                                     final Context context,
+                                     final IChallengeCompletionCallback callback) {
         mNtlmChallenge = new NtlmChallenge(view, handler, host, realm);
         mContext = context;
-        mChallengeCallbck = callback;
+        mChallengeCallback = callback;
     }
 
+    /**
+     * Process the NTLM Challenge. If the credentials stored for the current host exists, use the
+     * users credentials to resolve the NTML challenge. Otherwise, show the http auth dialog on UI,
+     * user will need to type in the username and password to resolve the NTML challenge.
+     */
     public void process() {
         if (mNtlmChallenge.getHandler().useHttpAuthUsernamePassword()
                 && mNtlmChallenge.getView() != null) {
-            String[] haup = mNtlmChallenge.getView().getHttpAuthUsernamePassword(mNtlmChallenge.getHost(), mNtlmChallenge.mRealm);
+            final String[] haup = mNtlmChallenge.getView()
+                    .getHttpAuthUsernamePassword(mNtlmChallenge.getHost(), mNtlmChallenge.mRealm);
             if (haup != null && haup.length == 2) {
                 final String userName = haup[0];
                 final String password = haup[1];
@@ -106,7 +111,7 @@ public final class NtlmChallengeHandler {
 
     private void cancelRequest() {
         Logger.verbose(TAG, "Sending intent to cancel authentication activity");
-        mChallengeCallbck.onError(AuthenticationConstants.UIResponse.BROWSER_CODE_CANCEL, new Intent());
+        mChallengeCallback.sendResponse(AuthenticationConstants.UIResponse.BROWSER_CODE_CANCEL, new Intent());
     }
 
     class NtlmChallenge {
@@ -116,9 +121,9 @@ public final class NtlmChallengeHandler {
         private String mRealm;
 
         NtlmChallenge(final WebView view,
-                             final HttpAuthHandler handler,
-                             final String host,
-                             final String realm) {
+                      final HttpAuthHandler handler,
+                      final String host,
+                      final String realm) {
             mHandler = handler;
             mView = view;
             mHost = host;
