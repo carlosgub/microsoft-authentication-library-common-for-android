@@ -23,7 +23,7 @@
 package com.microsoft.identity.common.internal.ui.embeddedwebview;
 
 import android.annotation.TargetApi;
-import android.content.Context;
+import android.app.Activity;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
@@ -34,13 +34,20 @@ import android.webkit.WebResourceRequest;
 import android.webkit.WebView;
 
 import com.microsoft.identity.common.adal.internal.AuthenticationConstants;
+import com.microsoft.identity.common.adal.internal.util.StringExtensions;
+import com.microsoft.identity.common.exception.ErrorStrings;
 import com.microsoft.identity.common.internal.logging.Logger;
+import com.microsoft.identity.common.internal.providers.microsoft.azureactivedirectory.AzureActiveDirectoryAuthorizationRequest;
+import com.microsoft.identity.common.internal.providers.microsoft.microsoftsts.MicrosoftStsAuthorizationRequest;
 import com.microsoft.identity.common.internal.providers.oauth2.AuthorizationRequest;
+import com.microsoft.identity.common.internal.ui.embeddedwebview.challengehandlers.ClientCertAuthChallengeHandler;
 import com.microsoft.identity.common.internal.ui.embeddedwebview.challengehandlers.IChallengeCompletionCallback;
 import com.microsoft.identity.common.internal.ui.embeddedwebview.challengehandlers.PKeyAuthChallengeHandler;
 import com.microsoft.identity.common.internal.util.StringUtil;
 
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
 
 /**
  * For web view client, we do not distinguish V1 from V2.
@@ -52,12 +59,13 @@ import java.util.Locale;
  */
 public class AzureActiveDirectoryWebViewClient extends OAuth2WebViewClient {
     private static final String TAG = AzureActiveDirectoryWebViewClient.class.getSimpleName();
+    private static final String INSTALL_URL_KEY = "app_link";
 
     //TODO Change AuthorizationRequest into MicrosoftAuthorizationRequest after merging the AuthorizationRequest PR.
-    AzureActiveDirectoryWebViewClient(@NonNull final Context context,
+    AzureActiveDirectoryWebViewClient(@NonNull final Activity activity,
                                       @NonNull final AuthorizationRequest request,
                                       @NonNull final IChallengeCompletionCallback callback) {
-        super(context, request, callback);
+        super(activity, request, callback);
     }
 
     /**
@@ -93,34 +101,162 @@ public class AzureActiveDirectoryWebViewClient extends OAuth2WebViewClient {
 
     private boolean handleUrl(final WebView view, final String url) {
         final String formattedURL = url.toLowerCase(Locale.US);
-        if (formattedURL.startsWith(AuthenticationConstants.Broker.PKEYAUTH_REDIRECT)) {
-            Logger.verbose(TAG, "Webview detected request for pkeyauth challenge.");
-            PKeyAuthChallengeHandler.newHandler().process(url, view, this.getCompletionCallback());
-            //TODO challengeCallback on error, on succeed
-        } else if (formattedURL.startsWith(getRequest().getRedirectUri().toLowerCase(Locale.US))) {
-            processRedirectUrl(view, url);
-        } else if (formattedURL.startsWith(AuthenticationConstants.Broker.BROWSER_EXT_PREFIX)) {
-            // handle external website request
-        } else if (formattedURL.startsWith(AuthenticationConstants.Broker.BROWSER_EXT_INSTALL_PREFIX)) {
-            // handle install request
+
+        if (isPkeyAuthUrl(formattedURL)) {
+            Logger.verbose(TAG, "WebView detected request for pkeyauth challenge.");
+            new PKeyAuthChallengeHandler(url, view, getRequest(), getCompletionCallback()).process();
+            return true;
+        } else if (isRedirectUrl(formattedURL)) {
+            Logger.verbose(TAG, "Navigation starts with the redirect uri.");
+            return processRedirectUrl(view, formattedURL);
+        } else if (isWebsiteRequestUrl(formattedURL)) {
+            Logger.verbose(TAG, "It is an external website request");
+            return processWebsiteRequest(view, formattedURL);
+        } else if (isInstallRequestUrl(formattedURL)) {
+            Logger.verbose(TAG, "It is an install request");
+            return processInstallRequest(view, formattedURL);
         } else {
-            // handle invalid url
+            Logger.verbose(TAG, "It is an invalid redirect uri.");
+            return processInvalidUrl(view, url);
         }
+    }
+
+    private boolean isPkeyAuthUrl(@NonNull final String url) {
+        return url.startsWith(AuthenticationConstants.Broker.PKEYAUTH_REDIRECT);
+    }
+
+    private boolean isRedirectUrl(@NonNull final String url) {
+        return url.startsWith(getRequest().getRedirectUri().toLowerCase(Locale.US));
+    }
+
+    private boolean isWebsiteRequestUrl(@NonNull final String url) {
+        return url.startsWith(AuthenticationConstants.Broker.BROWSER_EXT_PREFIX);
+    }
+
+    private boolean isInstallRequestUrl(@NonNull final String url) {
+        return url.startsWith(AuthenticationConstants.Broker.BROWSER_EXT_INSTALL_PREFIX);
+    }
+
+    private boolean isBrokerRequest(final Intent callingIntent) {
+        // Intent should have a flag and activity is hosted inside broker
+        return callingIntent != null
+                && !StringExtensions.isNullOrBlank(callingIntent
+                .getStringExtra(AuthenticationConstants.Broker.BROKER_REQUEST));
+    }
+
+    private boolean processRedirectUrl(@NonNull final WebView view, @NonNull final String url) {
+        final Map<String, String> parameters = StringExtensions.getUrlParameters(url);
+        if (!StringExtensions.isNullOrBlank(parameters.get("error"))) {
+            Logger.info(TAG, "Sending intent to cancel authentication activity");
+            Intent resultIntent = new Intent();
+            resultIntent.putExtra(AuthenticationConstants.Browser.RESPONSE_ERROR_CODE, parameters.get("error"));
+            resultIntent.putExtra(AuthenticationConstants.Browser.RESPONSE_ERROR_MESSAGE, parameters.get("error_description"));
+            getCompletionCallback().sendResponse(AuthenticationConstants.UIResponse.BROWSER_CODE_CANCEL, resultIntent);
+            view.stopLoading();
+        } else {
+            Logger.verbose(TAG, "It is pointing to redirect. Final url can be processed to get the code or error.");
+            Intent resultIntent = new Intent();
+            resultIntent.putExtra(AuthenticationConstants.Browser.RESPONSE_FINAL_URL, url);
+            resultIntent.putExtra(AuthenticationConstants.Browser.RESPONSE_REQUEST_INFO,
+                    getRequest());
+            getCompletionCallback().sendResponse(
+                    AuthenticationConstants.UIResponse.BROWSER_CODE_COMPLETE,
+                    resultIntent);
+            view.stopLoading();
+            //the TokenTask should be processed at after the authorization process in the upper calling layer.
+        }
+
+        return true;
+    }
+
+    private boolean processWebsiteRequest(@NonNull final WebView view, @NonNull final String url) {
+        //Open url link in browser
+        final String link = url
+                .replace(AuthenticationConstants.Broker.BROWSER_EXT_PREFIX, "https://");
+        final Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(link));
+        getActivity().getApplicationContext().startActivity(intent);
+        view.stopLoading();
+        Intent resultIntent = new Intent();
+        getCompletionCallback().sendResponse(AuthenticationConstants.UIResponse.BROWSER_CODE_CANCEL, resultIntent);
+        return true;
+    }
+
+    private boolean processInstallRequest(@NonNull final WebView view, @NonNull final String url) {
+        Logger.verbose(TAG, "Return to caller with BROKER_REQUEST_RESUME, and waiting for result.");
+        final Intent resultIntent = new Intent();
+        getCompletionCallback().sendResponse(AuthenticationConstants.UIResponse.BROKER_REQUEST_RESUME, resultIntent);
+
+        // Having thread sleep for 1 second for calling activity to receive the result from
+        // prepareForBrokerResumeRequest, thus the receiver for listening broker result return
+        // can be registered. openLinkInBrowser will launch activity for going to
+        // playstore and broker app download page which brought the calling activity down
+        // in the activity stack.
+        final int threadSleepForCallingActivity = 1000;
+        try {
+            Thread.sleep(threadSleepForCallingActivity);
+        } catch (InterruptedException e) {
+            Logger.verbose(TAG, "Error occurred when having thread sleeping for 1 second.");
+        }
+
+        HashMap<String, String> parameters = StringExtensions.getUrlParameters(url);
+        String link = parameters.get(INSTALL_URL_KEY)
+                .replace(AuthenticationConstants.Broker.BROWSER_EXT_PREFIX, "https://");
+        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(link));
+        getActivity().getApplicationContext().startActivity(intent);
+        view.stopLoading();
+
+        return true;
+    }
+
+    private boolean processInvalidUrl(@NonNull final WebView view, @NonNull final String url) {
+        if (isBrokerRequest(getActivity().getIntent())
+                && url.startsWith(AuthenticationConstants.Broker.REDIRECT_PREFIX)) {
+            Logger.error(TAG, "The RedirectUri is not as expected.", null);
+            Logger.errorPII(TAG, String.format("Received %s and expected %s", url, getRequest().getRedirectUri()), null);
+            returnError(ErrorStrings.DEVELOPER_REDIRECTURI_INVALID,
+                    String.format("The RedirectUri is not as expected. Received %s and expected %s", url,
+                            getRequest().getRedirectUri()));
+            view.stopLoading();
+            return true;
+        }
+
+        if (url.toLowerCase(Locale.US).equals("about:blank")) {
+            Logger.verbose(TAG, "It is an blank page request");
+            return true;
+        }
+
+        if (!url.toLowerCase(Locale.US).startsWith(AuthenticationConstants.Broker.REDIRECT_SSL_PREFIX)) {
+            Logger.error(TAG, "The webView was redirected to an unsafe URL.", null);
+            returnError(ErrorStrings.WEBVIEW_REDIRECTURL_NOT_SSL_PROTECTED, "The webView was redirected to an unsafe URL.");
+            view.stopLoading();
+            return true;
+        }
+
         return false;
     }
 
-    private void processRedirectUrl(final WebView view, final String url) {
-        // It is pointing to redirect. Final url can be processed to
-        // get the code or error.
+    private void returnError(final String errorCode, final String errorMessage) {
         Intent resultIntent = new Intent();
-        resultIntent.putExtra(AuthenticationConstants.Browser.RESPONSE_FINAL_URL, url);
-        // TODO return result intent to caller and generate the authorization result.
-        view.stopLoading();
+        resultIntent.putExtra(AuthenticationConstants.Browser.RESPONSE_ERROR_CODE, errorCode);
+        resultIntent.putExtra(AuthenticationConstants.Browser.RESPONSE_ERROR_MESSAGE, errorMessage);
+
+        if (getRequest() != null) {
+            if (getRequest() instanceof AzureActiveDirectoryAuthorizationRequest) {
+                resultIntent.putExtra(AuthenticationConstants.Browser.REQUEST_ID, ((AzureActiveDirectoryAuthorizationRequest) getRequest()).getCorrelationId());
+            } else if (getRequest() instanceof MicrosoftStsAuthorizationRequest) {
+                resultIntent.putExtra(AuthenticationConstants.Browser.REQUEST_ID, ((MicrosoftStsAuthorizationRequest) getRequest()).getCorrelationId());
+            }
+
+            resultIntent.putExtra(AuthenticationConstants.Browser.RESPONSE_REQUEST_INFO, getRequest());
+        }
+
+        getCompletionCallback().sendResponse(AuthenticationConstants.UIResponse.BROWSER_CODE_ERROR, resultIntent);
     }
 
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
     @Override
     public void onReceivedClientCertRequest(WebView view, final ClientCertRequest request) {
-
+        final ClientCertAuthChallengeHandler clientCertAuthChallengeHandler = new ClientCertAuthChallengeHandler(request, getActivity());
+        clientCertAuthChallengeHandler.process();
     }
 }

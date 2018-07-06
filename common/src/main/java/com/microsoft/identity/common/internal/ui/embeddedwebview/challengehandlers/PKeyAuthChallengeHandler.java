@@ -34,6 +34,7 @@ import com.microsoft.identity.common.adal.internal.util.StringExtensions;
 import com.microsoft.identity.common.exception.ClientException;
 import com.microsoft.identity.common.exception.ErrorStrings;
 import com.microsoft.identity.common.internal.logging.Logger;
+import com.microsoft.identity.common.internal.providers.oauth2.AuthorizationRequest;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -45,57 +46,78 @@ import java.util.Map;
 
 import static com.microsoft.identity.common.exception.ErrorStrings.DEVICE_CERTIFICATE_REQUEST_INVALID;
 
-public final class PKeyAuthChallengeHandler {
+public final class PKeyAuthChallengeHandler implements IChallengeHandler {
     private static final String TAG = PKeyAuthChallengeHandler.class.getSimpleName();
     /**
      * Certificate authorities are passed with delimiter.
      */
     private static final String CHALLENGE_REQUEST_CERT_AUTH_DELIMITER = ";";
+    private WebView mWebView;
+    private String mRedirectUri;
+    private AuthorizationRequest mRequest;
+    private IChallengeCompletionCallback mChallengeCallback;
 
-    public static PKeyAuthChallengeHandler newHandler() {
-        return new PKeyAuthChallengeHandler();
+    /**
+     * @param redirectUri        Location: urn:http-auth:CertAuth?Nonce=<noncevalue>
+     *                           &CertAuthorities=<distinguished names of CAs>&Version=1.0
+     *                           &SubmitUrl=<URL to submit response>&Context=<server state that
+     *                           client must convey back>
+     * @param view
+     * @param completionCallback
+     * @throws ClientException
+     */
+    public PKeyAuthChallengeHandler(@NonNull final String redirectUri,
+                                    @NonNull final WebView view,
+                                    @NonNull final AuthorizationRequest request,
+                                    @NonNull IChallengeCompletionCallback completionCallback) {
+        mWebView = view;
+        mRedirectUri = redirectUri;
+        mRequest = request;
+        mChallengeCallback = completionCallback;
     }
 
-    public void process(@NonNull final String redirectUri, @NonNull final WebView view, @NonNull IChallengeCompletionCallback completionCallback) {
-        try {
-            final PkeyAuthChallengeResponse challengeResponse = getChallengeResponseFromUri(redirectUri);
-            final Map<String, String> headers = new HashMap<>();
-            headers.put(AuthenticationConstants.Broker.CHALLENGE_RESPONSE_HEADER,
-                    challengeResponse.getAuthorizationHeaderValue());
-            new Runnable() {
+    public void process() {
+        mWebView.stopLoading();
+        mChallengeCallback.setPKeyAuthStatus(true);
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    final PkeyAuthChallengeResponse challengeResponse = getChallengeResponseFromUri();
+                    final Map<String, String> headers = new HashMap<>();
+                    headers.put(AuthenticationConstants.Broker.CHALLENGE_RESPONSE_HEADER,
+                            challengeResponse.getAuthorizationHeaderValue());
+                    mWebView.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            String loadUrl = challengeResponse.getSubmitUrl();
+                            Logger.verbose(TAG, "Respond to pkeyAuth challenge");
+                            Logger.verbosePII(TAG, "Challenge submit url:" + challengeResponse.getSubmitUrl());
 
-                @Override
-                public void run() {
-                    String loadUrl = challengeResponse.getSubmitUrl();
-                    Logger.verbose(TAG, "Respond to pkeyAuth challenge");
-                    Logger.verbosePII(TAG, "Challenge submit url:" + challengeResponse.getSubmitUrl());
-                    view.loadUrl(loadUrl, headers);
+                            mWebView.loadUrl(loadUrl, headers);
+                        }
+                    });
+                } catch (final ClientException e) {
+                    // It should return error code and finish the
+                    // activity, so that onActivityResult implementation
+                    // returns errors to callback.
+                    Intent resultIntent = new Intent();
+                    resultIntent.putExtra(AuthenticationConstants.Browser.RESPONSE_AUTHENTICATION_EXCEPTION, e);
+                    resultIntent.putExtra(AuthenticationConstants.Browser.RESPONSE_REQUEST_INFO, mRequest);
+                    mChallengeCallback.sendResponse(AuthenticationConstants.UIResponse.BROWSER_CODE_AUTHENTICATION_EXCEPTION, resultIntent);
                 }
-            };
-        } catch (final ClientException e) {
-            // It should return error code and finish the
-            // activity, so that onActivityResult implementation
-            // returns errors to callback.
-            Intent resultIntent = new Intent();
-            resultIntent.putExtra(AuthenticationConstants.Browser.RESPONSE_AUTHENTICATION_EXCEPTION, e);
-            //TODO should put request info for onError() intent
-            completionCallback.sendResponse(AuthenticationConstants.UIResponse.BROWSER_CODE_AUTHENTICATION_EXCEPTION, resultIntent);
-        }
+            }
+        }).start();
     }
 
     /**
      * This parses the redirectURI for challenge components and produces
      * response object.
      *
-     * @param redirectUri Location: urn:http-auth:CertAuth?Nonce=<noncevalue>
-     *                    &CertAuthorities=<distinguished names of CAs>&Version=1.0
-     *                    &SubmitUrl=<URL to submit response>&Context=<server state that
-     *                    client must convey back>
      * @return Return Device challenge response
      */
-    public PkeyAuthChallengeResponse getChallengeResponseFromUri(
-            @NonNull final String redirectUri) throws ClientException {
-        final PkeyAuthChallengeRequest challengeRequest = getChallengeRequestFromUri(redirectUri);
+    private PkeyAuthChallengeResponse getChallengeResponseFromUri() throws ClientException {
+        final PkeyAuthChallengeRequest challengeRequest = getChallengeRequestFromUri(mRedirectUri);
 
         //Get no device cert response
         PkeyAuthChallengeResponse response = new PkeyAuthChallengeResponse();
@@ -147,7 +169,6 @@ public final class PKeyAuthChallengeHandler {
             throws ClientException {
         HashMap<String, String> parameters = StringExtensions.getUrlParameters(redirectUri);
         validateChallengeRequest(parameters);
-        //PkeyAuthChallenge challenge = new PkeyAuthChallenge();
         final PkeyAuthChallengeRequest challenge = new PkeyAuthChallengeRequest(
                 parameters.get(RequestField.Nonce.name().toLowerCase(Locale.US)),
                 parameters.get(RequestField.Context.name()),
@@ -215,9 +236,6 @@ public final class PKeyAuthChallengeHandler {
         private String mVersion = null;
 
         private String mSubmitUrl = "";
-
-        PkeyAuthChallengeRequest() {
-        }
 
         PkeyAuthChallengeRequest(final String nonce,
                                  final String context,

@@ -208,10 +208,20 @@ public final class ErrorStrings {
     /**
      * Signature exception.
      */
-     public static final String SIGNATURE_EXCEPTION = "Signature exception";
+    public static final String SIGNATURE_EXCEPTION = "Signature exception";
 
-     /**
+    /**
      * Device certificate API has exception.
      */
     public static final String DEVICE_CERTIFICATE_API_EXCEPTION = "Device certificate API has exception";
+
+    /**
+     * The redirectUri for broker is invalid.
+     */
+    public static final String DEVELOPER_REDIRECTURI_INVALID = "The redirectUri for broker is invalid";
+
+    /**
+     * WebView  redirect url is not SSL protected.
+     */
+    public static final String WEBVIEW_REDIRECTURL_NOT_SSL_PROTECTED = "The webView was redirected to an unsafe URL";
 }

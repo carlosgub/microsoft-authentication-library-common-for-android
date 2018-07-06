@@ -38,25 +38,19 @@ import java.security.Principal;
 import java.security.PrivateKey;
 import java.security.cert.X509Certificate;
 
-final class ClientCertAuthChallengeHandler {
+public final class ClientCertAuthChallengeHandler implements IChallengeHandler {
     private static final String TAG = ClientCertAuthChallengeHandler.class.getSimpleName();
     private ClientCertRequest mClientCertRequest;
-    private AzureActiveDirectoryWebViewClient mWebViewClient;
     private Activity mActivity;
-    private IChallengeCompletionCallback mCompletionCallback;
 
-    ClientCertAuthChallengeHandler(@NonNull final ClientCertRequest request,
-                                   @NonNull final AzureActiveDirectoryWebViewClient webViewClient,
-                                   @NonNull final Activity activity,
-                                   final IChallengeCompletionCallback completionCallback) {
+    public ClientCertAuthChallengeHandler(@NonNull final ClientCertRequest request,
+                                   @NonNull final Activity activity) {
         mClientCertRequest = request;
-        mWebViewClient = webViewClient;
         mActivity = activity;
-        mCompletionCallback = completionCallback;
     }
 
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
-    public void processClientCertAuth() {
+    public void process() {
         final Principal[] acceptableCertIssuers = mClientCertRequest.getPrincipals();
 
         // When ADFS server sends null or empty issuers, we'll continue with cert prompt.
@@ -82,9 +76,9 @@ final class ClientCertAuthChallengeHandler {
 
                         try {
                             final X509Certificate[] certChain = KeyChain.getCertificateChain(
-                                    mWebViewClient.getContext().getApplicationContext(), alias);
+                                    mActivity.getApplicationContext(), alias);
                             final PrivateKey privateKey = KeyChain.getPrivateKey(
-                                    mWebViewClient.getContext(), alias);
+                                    mActivity, alias);
 
                             Logger.verbose(TAG, "Certificate is chosen by user, proceed with TLS request.");
                             mClientCertRequest.proceed(privateKey, certChain);
