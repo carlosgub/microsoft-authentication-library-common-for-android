@@ -96,6 +96,9 @@ public abstract class AuthorizationRequest implements Serializable {
         mScope = scope;
     }
 
+    public AuthorizationRequest() {
+    }
+
     /**
      * Return the start URL to load in the web view.
      *

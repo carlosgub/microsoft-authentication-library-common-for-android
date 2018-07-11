@@ -129,6 +129,10 @@ public abstract class MicrosoftAuthorizationRequest extends AuthorizationRequest
         mLibraryVersion = libraryVersion;
     }
 
+    public MicrosoftAuthorizationRequest() {
+        super();
+    }
+
     public URL getAuthority() {
         return mAuthority;
     }
