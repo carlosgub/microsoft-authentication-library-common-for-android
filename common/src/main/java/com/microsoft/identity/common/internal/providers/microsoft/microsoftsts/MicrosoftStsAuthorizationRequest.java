@@ -102,7 +102,7 @@ public class MicrosoftStsAuthorizationRequest extends MicrosoftAuthorizationRequ
     }
 
     public MicrosoftStsAuthorizationRequest() {
-        super();
+
     }
 
     public Set<String> getExtraScopesToConsent() {

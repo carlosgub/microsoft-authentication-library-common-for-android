@@ -23,8 +23,10 @@
 package com.microsoft.identity.common.internal.ui.embeddedwebview;
 
 import android.app.Activity;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
+import android.webkit.WebSettings;
 import android.webkit.WebView;
 
 import com.microsoft.identity.common.adal.internal.AuthenticationConstants;
@@ -59,7 +61,8 @@ public class EmbeddedWebViewAuthorizationStrategy<GenericWebViewClient extends O
         loadStartUrl();
         // TODO : Add state parameter from the AuthorizationRequest to the Intent parameter like below
         // intent.putExtra(MicrosoftAuthorizationResult.REQUEST_STATE_PARAMETER, request.getState());
-        throw new UnsupportedOperationException("Not implemented yet.");
+        //throw new UnsupportedOperationException("Not implemented yet.");
+        return null;
     }
 
     /**
@@ -69,9 +72,9 @@ public class EmbeddedWebViewAuthorizationStrategy<GenericWebViewClient extends O
      * @throws UnsupportedEncodingException
      * @throws ClientException
      */
-    public EmbeddedWebViewAuthorizationStrategy(final GenericWebViewClient webViewClient)
+    public EmbeddedWebViewAuthorizationStrategy(final GenericWebViewClient webViewClient, WebView webView)
             throws UnsupportedEncodingException, ClientException {
-        createWebView(webViewClient);
+        createWebView(webViewClient, webView);
         mStartUrl = webViewClient.getRequest().getAuthorizationStartUrl();
     }
 
@@ -80,14 +83,20 @@ public class EmbeddedWebViewAuthorizationStrategy<GenericWebViewClient extends O
      *
      * @param webViewClient Generic WebViewClient
      */
-    private void createWebView(final GenericWebViewClient webViewClient) {
+    private void createWebView(final GenericWebViewClient webViewClient,final WebView webView) {
         final Activity activity = webViewClient.getActivity();
         // Create the Web View to show the page
-        mWebView = (WebView) activity.findViewById(activity.getResources().getIdentifier("webView1", "id",
-                activity.getPackageName()));
+        mWebView = webView;
+        WebSettings userAgentSetting = mWebView.getSettings();
+        String userAgent = userAgentSetting.getUserAgentString();
         mWebView.getSettings().setUserAgentString(
-                mWebView.getSettings().getUserAgentString() + AuthenticationConstants.Broker.USER_AGENT_VALUE_PKEY_AUTH);
+                userAgent + AuthenticationConstants.Broker.USER_AGENT_VALUE_PKEY_AUTH);
+        userAgent = mWebView.getSettings().getUserAgentString();
+        Logger.verbose(TAG, "UserAgent:" + userAgent, null);
+
         mWebView.requestFocus(View.FOCUS_DOWN);
+        //Javascript is required from AAD server side.
+        mWebView.getSettings().setJavaScriptEnabled(true);
 
         // Set focus to the view for touch event
         mWebView.setOnTouchListener(new View.OnTouchListener() {
@@ -107,6 +116,7 @@ public class EmbeddedWebViewAuthorizationStrategy<GenericWebViewClient extends O
         mWebView.getSettings().setBuiltInZoomControls(true);
         mWebView.setVisibility(View.INVISIBLE);
         mWebView.setWebViewClient(webViewClient);
+
     }
 
     /**

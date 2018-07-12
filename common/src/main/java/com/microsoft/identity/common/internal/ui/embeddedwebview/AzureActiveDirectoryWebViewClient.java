@@ -64,7 +64,7 @@ public class AzureActiveDirectoryWebViewClient extends OAuth2WebViewClient {
     public static final String ERROR = "error";
     public static final String ERROR_DESCRIPTION = "error_description";
 
-    AzureActiveDirectoryWebViewClient(@NonNull final Activity activity,
+    public AzureActiveDirectoryWebViewClient(@NonNull final Activity activity,
                                       @NonNull final MicrosoftAuthorizationRequest request,
                                       @NonNull final IChallengeCompletionCallback callback) {
         super(activity, request, callback);
