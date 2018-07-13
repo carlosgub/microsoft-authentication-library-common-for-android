@@ -162,18 +162,19 @@ public class AzureActiveDirectoryWebViewClient extends OAuth2WebViewClient {
             Intent resultIntent = new Intent();
             resultIntent.putExtra(AuthenticationConstants.Browser.RESPONSE_ERROR_CODE, parameters.get(ERROR));
             resultIntent.putExtra(AuthenticationConstants.Browser.RESPONSE_ERROR_MESSAGE, parameters.get(ERROR_DESCRIPTION));
-            getCompletionCallback().onChallengeResponseReceived(AuthenticationConstants.UIResponse.BROWSER_CODE_CANCEL, resultIntent);
             view.stopLoading();
+            getCompletionCallback().onChallengeResponseReceived(AuthenticationConstants.UIResponse.BROWSER_CODE_CANCEL, resultIntent);
+
         } else {
             Logger.verbose(TAG, "It is pointing to redirect. Final url can be processed to get the code or error.");
             Intent resultIntent = new Intent();
-            resultIntent.putExtra(AuthenticationConstants.Browser.RESPONSE_FINAL_URL, url);
+            resultIntent.putExtra(AuthenticationConstants.Browser.AUTHORIZATION_FINAL_URL, url);
             resultIntent.putExtra(AuthenticationConstants.Browser.RESPONSE_REQUEST_INFO,
                     getRequest());
+            view.stopLoading();
             getCompletionCallback().onChallengeResponseReceived(
                     AuthenticationConstants.UIResponse.BROWSER_CODE_COMPLETE,
                     resultIntent);
-            view.stopLoading();
             //the TokenTask should be processed at after the authorization process in the upper calling layer.
         }
 

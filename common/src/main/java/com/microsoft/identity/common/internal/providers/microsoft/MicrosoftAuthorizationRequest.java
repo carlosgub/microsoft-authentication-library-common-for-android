@@ -62,6 +62,10 @@ public abstract class MicrosoftAuthorizationRequest extends AuthorizationRequest
     public static final String LIB_ID_CPU = "x-client-CPU";
     public static final String LIB_ID_OS_VER = "x-client-OS";
     public static final String LIB_ID_DM = "x-client-DM";
+    /**
+     * Serial version id.
+     */
+    private static final long serialVersionUID = 6873634931996113294L;
 
     /**
      * Required.

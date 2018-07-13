@@ -116,7 +116,6 @@ public class EmbeddedWebViewAuthorizationStrategy<GenericWebViewClient extends O
         mWebView.getSettings().setBuiltInZoomControls(true);
         mWebView.setVisibility(View.INVISIBLE);
         mWebView.setWebViewClient(webViewClient);
-
     }
 
     /**
