@@ -59,9 +59,7 @@ public class EmbeddedWebViewAuthorizationStrategy<GenericWebViewClient extends O
     @Override
     public GenericAuthorizationResult requestAuthorization(final GenericAuthorizationRequest request) {
         loadStartUrl();
-        // TODO : Add state parameter from the AuthorizationRequest to the Intent parameter like below
-        // intent.putExtra(MicrosoftAuthorizationResult.REQUEST_STATE_PARAMETER, request.getState());
-        //throw new UnsupportedOperationException("Not implemented yet.");
+        //TODO Actually, the authorization result could not be returned here. Because the result intent is set in Authentication Activity.
         return null;
     }
 

@@ -22,6 +22,7 @@
 // THE SOFTWARE.
 package com.microsoft.identity.common.internal.providers.microsoft.microsoftsts;
 
+import android.annotation.TargetApi;
 import android.os.Build;
 import android.support.annotation.NonNull;
 
@@ -46,7 +47,7 @@ public class MicrosoftStsAuthorizationRequest extends MicrosoftAuthorizationRequ
     private static final String TAG = MicrosoftStsAuthorizationRequest.class.getSimpleName();
 
     /* Constants */
-    private static final String CORRELATION_ID = "correlation_id";
+    private static final String CORRELATION_ID = "client-request-id";
     private static final String LOGIN_REQ = "login_req";
     private static final String DOMAIN_REQ = "domain_req";
     private static final String SCOPE_PROFILE = "profile";
@@ -276,10 +277,11 @@ public class MicrosoftStsAuthorizationRequest extends MicrosoftAuthorizationRequ
 
     // Add PKCE Challenge
     private void addPkceChallengeToRequestParameters(@NonNull final Map<String, String> requestParameters) throws ClientException {
-        // Create our Challenge
-        setPkceChallenge(PkceChallenge.newPkceChallenge());
-
+        if (getPkceChallenge() == null) {
+            setPkceChallenge(PkceChallenge.newPkceChallenge());
+        }
         // Add it to our Authorization request
+        Logger.verbose(TAG, "Heidi: common pkce challenge code verifier = " + getPkceChallenge().getCodeVerifier());
         requestParameters.put(CODE_CHALLENGE, getPkceChallenge().getCodeChallenge());
         // The method used to encode the code_verifier for the code_challenge parameter.
         // Can be one of plain or S256.
