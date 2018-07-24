@@ -318,9 +318,9 @@ public class MsalOAuth2TokenCache
         final String[][] params = new String[][]{
                 {Account.SerializedNames.HOME_ACCOUNT_ID, account.getHomeAccountId()},
                 {Account.SerializedNames.ENVIRONMENT, account.getEnvironment()},
-                {Account.SerializedNames.REALM, account.getRealm()},
+                //{Account.SerializedNames.REALM, account.getRealm()},
                 {Account.SerializedNames.LOCAL_ACCOUNT_ID, account.getLocalAccountId()},
-                {Account.SerializedNames.USERNAME, account.getUsername()},
+                //{Account.SerializedNames.USERNAME, account.getUsername()},
                 {Account.SerializedNames.AUTHORITY_TYPE, account.getAuthorityType()},
         };
 
@@ -334,7 +334,7 @@ public class MsalOAuth2TokenCache
         final String[][] params = new String[][]{
                 {Credential.SerializedNames.CREDENTIAL_TYPE, accessToken.getCredentialType()},
                 {Credential.SerializedNames.HOME_ACCOUNT_ID, accessToken.getHomeAccountId()},
-                {AccessToken.SerializedNames.REALM, accessToken.getRealm()},
+                //{AccessToken.SerializedNames.REALM, accessToken.getRealm()},
                 {Credential.SerializedNames.ENVIRONMENT, accessToken.getEnvironment()},
                 {Credential.SerializedNames.CLIENT_ID, accessToken.getClientId()},
                 {AccessToken.SerializedNames.TARGET, accessToken.getTarget()},
@@ -368,7 +368,7 @@ public class MsalOAuth2TokenCache
         final String[][] params = new String[][]{
                 {Credential.SerializedNames.HOME_ACCOUNT_ID, idToken.getHomeAccountId()},
                 {Credential.SerializedNames.ENVIRONMENT, idToken.getEnvironment()},
-                {IdToken.SerializedNames.REALM, idToken.getRealm()},
+                //{IdToken.SerializedNames.REALM, idToken.getRealm()},
                 {Credential.SerializedNames.CREDENTIAL_TYPE, idToken.getCredentialType()},
                 {Credential.SerializedNames.CLIENT_ID, idToken.getClientId()},
                 {Credential.SerializedNames.SECRET, idToken.getSecret()},
