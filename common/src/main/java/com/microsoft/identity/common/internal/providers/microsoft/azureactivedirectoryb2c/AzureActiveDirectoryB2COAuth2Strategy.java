@@ -114,4 +114,9 @@ public class AzureActiveDirectoryB2COAuth2Strategy extends OAuth2Strategy {
     protected TokenResult getTokenResultFromHttpResponse(HttpResponse response) {
         return null;
     }
+
+    @Override
+    public boolean supportsOIDC() {
+        return true;
+    }
 }

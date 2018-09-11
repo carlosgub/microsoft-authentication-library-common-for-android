@@ -167,4 +167,9 @@ public class MicrosoftStsOAuth2Strategy
         return new TokenResult(tokenResponse, tokenErrorResponse);
     }
 
+    @Override
+    public boolean supportsOIDC() {
+        return true;
+    }
+
 }

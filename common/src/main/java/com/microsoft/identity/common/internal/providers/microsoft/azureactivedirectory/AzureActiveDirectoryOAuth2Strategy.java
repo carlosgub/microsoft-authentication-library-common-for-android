@@ -227,4 +227,9 @@ public class AzureActiveDirectoryOAuth2Strategy
         return result;
     }
 
+    @Override
+    public boolean supportsOIDC() {
+        return false;
+    }
+
 }
